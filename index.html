@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formulario Geolocalizado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #formulario {
+      display: none;
+      width: 100%;
+      height: 80vh;
+    }
+    #mensaje {
+      font-size: 1.2em;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Fichajes Conductores</h2>
+  <div id="mensaje">Verificando ubicación...</div>
+
+  <iframe id="formulario"src="https://docs.google.com/forms/d/e/1FAIpQLSeMfWPhrwdIBGmIRqGYYCMuGx7Y97MdPlOhRi9XJVPxQ9_a5w/viewform" frameborder="0" allowfullscreen></iframe>
+
+  <script>
+    // Coordenadas del centro del área permitida
+    const centroLat = 39.53880056178569;  // <-- Cambia esto por tu latitud
+    const centroLng = 2.7358730781201626;  // <-- Cambia esto por tu longitud
+    const radioPermitido = 1150; // En metros
+
+    function calcularDistancia(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // Radio de la Tierra en metros
+      const toRad = angle => angle * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function verificarUbicacion() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            const distancia = calcularDistancia(userLat, userLng, centroLat, centroLng);
+
+            if (distancia <= radioPermitido) {
+              document.getElementById("mensaje").style.display = "none";
+              document.getElementById("formulario").style.display = "block";
+            } else {
+              document.getElementById("mensaje").textContent = "No estás dentro del rango de proximidad, por favor acercate a la zona de fichaje. Gracias!";
+            }
+          },
+          error => {
+            document.getElementById("mensaje").textContent = "Error al obtener ubicación.";
+          }
+        );
+      } else {
+        document.getElementById("mensaje").textContent = "La geolocalización no está soportada.";
+      }
+    }
+
+    // Ejecutar al cargar
+    verificarUbicacion();
+  </script>
+
+</body>
+</html>
